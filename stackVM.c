@@ -7,9 +7,6 @@
 
 #define RAM_CAPACITY 200
 
-#define COMMAND_OPCODE 63
-
-#define POSITION 0
 
 void load_program(int *ram, int *ip); 
 
@@ -22,7 +19,7 @@ int main(){
 	bool running = true; 
 	int stack[STACK_CAPACITY], ram[RAM_CAPACITY], *ip = ram, current_pos = 99, *top = &current_pos; 
 	char commands[20];
-	while(1){
+	while(running){
 		scanf("%s", commands); 
 		if(strcmp(commands, "LOAD") == 0){
 			printf("=====LOADING PROGRAM=====\n");

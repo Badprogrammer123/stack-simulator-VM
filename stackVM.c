@@ -7,12 +7,13 @@
 
 #define RAM_CAPACITY 200
 
+int load_program_and_decode(int *ram, int *ip); 
 
-void load_program(int *ram, int *ip); 
-
-void decode_and_executes(int *ram, int *stack, int *ip,  int *top);
+int execute(int *ram, int *stack, int *ip,  int *top);
 
 void push(int* stack, int* ip, int *top);
+
+void pop(int* stack, int* top);
 
 int main(){
 
@@ -22,44 +23,67 @@ int main(){
 	while(running){
 		scanf("%s", commands); 
 		if(strcmp(commands, "LOAD") == 0){
-			printf("=====LOADING PROGRAM=====\n");
-			load_program(ram, ip);
+			if(load_program_and_decode(ram, ip)){
+				printf("======PROGRAM LOADED SUCCESSFULLY=====\n");
+			}
+			else{
+				printf("======PROGRAM FAILED TO LOAD=====\n");
+			}
 		}
-		else if(strcmp(commands, "EXECUTE") == 0){
-			printf("======EXECUTING PROGRAM=====\n");
-			decode_and_executes(ram, stack, ip, top);
+		if(strcmp(commands, "EXECUTE") == 0){
+			if(execute(ram, stack, ip, top)){
+				printf("=====PROGRAM EXECUTED SUCCESSFULLY=====\n");
+			}
+			else{
+				printf("=====PROGRAM FAILED TO EXECUTE=====\n");
+			}
+		}
+
+		if(strcmp(commands, "PEEK") == 0){
+			printf("STACK: \n");
+			for(int i = 0; *top + i < 100; i++){
+				printf("<%c>", stack [(*top) + i]);
+			}
 		}
 	} 
 }
 
 
-void load_program(int *ram, int *ip){
+int load_program_and_decode(int *ram, int *ip){
 	FILE *file = fopen("main.txt", "r");
-	char command[100];
+	char command[200];
 	char value[50];
 	int ramPOS = 0;
 	while(fscanf(file, "%s", command) != EOF){
-		fscanf(file, "%s", value);
 		if(strcmp(command, "PUSH") == 0){
 			ram[ramPOS++] = '?'; 
 			ram[ramPOS++] = '0';
+			fscanf(file, "%s", value);
 			for(int i = 0; value[i] != '\0'; i++){
 				ram[ramPOS++] = value[i];
 			}
-			
+		}
+
+		if(strcmp(command, "POP") == 0){
+                        ram[ramPOS++] = '?';
+                        ram[ramPOS++] = '1';
+                }
+		
+
+		if(strcmp(command, ">") == 0){
+			ram[ramPOS++] = '>';
 		}
 		ram[ramPOS++] = '*';
 	}	
-	for(int i = 0; i < 10; i++) printf("%c", ram[i]);
-	fclose(file);
+	for(int i =0; i < 22; i ++) printf("%c", *(ram + i));
+	return 1;
 
 }
 
 
-void decode_and_executes(int *ram, int *stack, int *ip, int *top){
+int execute(int *ram, int *stack, int *ip, int *top){
 	int move_ip = 0;
-	int duration = -1;
-	while(duration != move_ip){
+	while(*(ip + move_ip) != (int)'>'){
 		if(*(ip + move_ip) == (int)'?' ){
 			move_ip++;
 			if(*(ip + move_ip) == (int)'0'){
@@ -67,18 +91,24 @@ void decode_and_executes(int *ram, int *stack, int *ip, int *top){
 					push(stack, ip + move_ip, top);
 				}
 			}
-			
+			if(*(ip + move_ip) == (int)'1'){
+				while(stack[(*top)++] != (int)'*' && (*top) < 100);
+				while(*(ip + move_ip++) != (int)'*'){
+					pop(stack, top);
+					//printf("%c", *(ip + move_ip));
+				}
+				//printf("%c", *(ip + move_ip));
+			}
 		}
-		else{
-			printf("****ERROR: PROGRAM FAILED TO BE EXECUTED****\n");
-			break;
-		}
-		duration++;
 	}
+	*ip = move_ip; 
+	return 1; 
 }
 
 void push(int *stack, int *ip, int *top){
-	stack[*top] = *ip;
-	printf("<%c>", stack[*top]);
-	(*top)--;
+	stack[(*top)--] = *ip;
+}
+
+void pop(int* stack, int* top){
+	stack[*top] = '\0';
 }
